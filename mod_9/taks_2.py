@@ -9,6 +9,8 @@ df = pd.read_csv('data/HRDataset.csv')
 
 # Konwersja daty urodzenia na wiek
 df['DOB'] = pd.to_datetime(df['DOB'],format='%m/%d/%y')
+df['DateofTermination'] = pd.to_datetime(df['DateofTermination'],format='%m/%d/%y')
+df['DateofHire'] = pd.to_datetime(df['DateofHire'],format='%m/%d/%Y')
 df['Age'] = df.apply(lambda row: (pd.Timestamp.now() - row['DOB']).days / 365.25 if pd.notnull(row['DOB']) else np.nan, axis=1)
 
 # Usunięcie wierszy z brakującymi danymi
@@ -21,6 +23,12 @@ df['ManagerIndex'] = manager_encoder.fit_transform(df['ManagerName'])
 # Analiza 1: Zależność między ManagerIndex a PerformanceScore
 sns.boxplot(x='ManagerIndex',y='PerformanceScore',data=df)
 plt.show()
+
+# Utworzenie nowej kolumny DaysLateLast30
+# Aktualizacja DateofTermination do końca dzisiejszego dnia
+today = pd.Timestamp.now().normalize()  # Użycie normalize() aby ustawić pełną datę
+df['DateofTermination'] = df['DateofTermination'].fillna(today)
+df['DaysLateLast30'] = (df['DateofTermination'] - df['DateofHire']).dt.days
 
 # Analiza 2: Najlepsze źródła pozyskania pracowników dla długiego stażu
 recruitment_sources = df.groupby('RecruitmentSource')['DaysLateLast30'].mean().sort_values(ascending=False).head(5)
